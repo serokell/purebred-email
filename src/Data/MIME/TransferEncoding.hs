@@ -35,11 +35,10 @@ module Data.MIME.TransferEncoding
   , chooseTransferEncoding
   ) where
 
-import Data.Monoid (Sum(Sum), Any(Any))
 
 import Control.Lens
+import Data.Maybe (isNothing)
 import qualified Data.ByteString as B
-import Data.ByteString.Lens (bytes)
 import qualified Data.CaseInsensitive as CI
 
 import Data.MIME.Base64
@@ -138,5 +137,6 @@ chooseTransferEncoding s
     qpBytes c
       | encodingRequiredNonEOL QuotedPrintable c = 3
       | otherwise = 1
-    (Any doEnc, Sum nQP) = foldMapOf bytes (\c -> (Any (needEnc c), Sum (qpBytes c))) s
+    doEnc = isNothing $ B.find needEnc s
+    nQP = B.foldl' (\acc a -> acc + qpBytes a) 0 s
     nB64 = ((B.length s + 2) `div` 3) * 4
